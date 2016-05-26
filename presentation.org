@@ -1,0 +1,176 @@
+* Multithreading 101
+
+
+
+
+** *Chilango Rails* - Mayo 2016
+
+
+*** aleandros (github, twitter)
+
+
+
+
+
+
+*** github.com/aleandros/multithreading-101
+
+* Para hoy
+
+    - ¿Por qué? en lugar de ¿cómo?
+
+    - No nos pondremos académicos
+ 
+    - Poco código
+
+
+
+* Problema 1: Describir varias tareas a la vez
+
+
+    Tarea:  (comienzo) ===========> (fin)
+  
+    -------------------------------------
+  
+    Tarea 1:  (comienzo) =========> (fin)
+    Tarea 2:  (comienzo) =========> (fin)
+
+  
+* Solución 1: Threads
+
+    #+begin_src ruby
+    t1 = Thread.new do
+      tarea_1
+    end
+
+    tarea_2
+
+    t1.join # ¡Esperar a tarea 1!
+    #+end_src
+  
+
+* Problema 2.1: Compartir recursos
+  
+    #+begin_src ruby
+    Thread.new do
+      usar_recurso
+    end
+
+    Thread.new do
+      usar_recurso
+    end
+    #+end_src
+
+** Recursos:
+
+    - DB
+    - Archivos
+    - puts "hello" # stdout
+    - counter += 1
+
+
+* Problema 2.2: Manejar dependencias
+
+
+                       -----------
+    Thread 1 =======>  | Recurso |  =====>
+    Thread 2 =======>  |    ?    |  =====>
+                       -----------
+
+    - ¿Quién va primero?
+
+    - ¿Quién tiene prioridad?
+
+
+* Solución 2: Sincronización
+
+    #+begin_src ruby
+    require 'thread'
+    lock = Mutex.new # Wait, what?
+
+    Thread.new do
+      lock.synchronize do
+        usar_recurso
+      end
+    end
+
+    #+end_src ruby
+
+  
+    T1 ======> usar_recurso ======>
+    T2 ======> ............ usar_recurso =====>
+
+
+* Problema 3: Aprovechar hardware
+
+                       --------------------------
+                       |       Computadora      |
+                       |                        |
+    Tarea A   ---->    | ----------  ---------- |
+    Tarea B   ---->    | | Core 1 |  | Core 2 | |
+                       | ----------  ---------- |
+                       |                        |
+                       |     --------------     | 
+		       |     |    RAM     |     |
+                       --------------------------
+
+
+* Solución 3: ¿Depende?
+
+
+
+     Paralelismo  |  Implementación
+     -----------------------------------------------
+        :(        |  *MRI*      -  GIL ¯\_(ツ)_/¯
+
+        :)        |  *Rubinius* -  Shitload of locks
+
+        :D        |  *JRuby*    -  JVM Threads
+
+
+** Paralelismo de IO
+
+
+    Nuestro código no hace mucho
+
+       Tarea ...Red...===>....DB....===>...FS...
+
+
+
+* Problema 4: Fucking Threads
+
+    - Threads son bajo nivel
+
+    - Difíciles de razonar
+
+    - Errores difíciles de reproducir
+
+    - "I would remove the thread" - Matz
+
+
+* Solución 4: Cambiarse de paradigma
+
+    - Actores (Erlang, Scala) - No compartir nada, usar mensajes
+
+    - CSP (go) - ¡no es lo mismo que actores!
+
+    - STM (Haskell, Clojure) - Tan académico como suena
+
+    - Reactor loop (node) - fuck multicore
+
+
+    - En ruby: celluloid, eventmachine
+
+
+* No todo es malo
+
+    - Los threads funcionan (puma, celluloid, sidekiq)
+
+    - Los threads son solo una abstracción
+
+    - La concurrencia es divertida
+
+    - Muchos problmas 'embarrasingly parallel'
+
+
+* ¿Preguntas?
